@@ -302,6 +302,14 @@ function activateBlock(block) {
   if (block.broken) {
     return;
   }
+
+  if (block.type === "brick") {
+    block.broken = true;
+    block.used = true;
+    spawnBrickDebris(block);
+    return;
+  }
+
   block.bumpVelocity = -2.8;
   if (block.used || block.broken) {
     return;
@@ -315,8 +323,6 @@ function activateBlock(block) {
   if (block.contains === "mushroom" || block.contains === "flower") {
     spawnPowerup(block);
   }
-  block.broken = true;
-  spawnBrickDebris(block);
   syncHud();
 }
 
@@ -406,6 +412,7 @@ function hurtPlayer() {
   player.vx = 0;
   player.vy = 0;
   player.onGround = false;
+  cameraX = Math.max(0, Math.min(world.width - canvas.width, player.x - canvas.width * 0.35));
   coyoteTimer = timing.coyoteFrames;
   jumpBufferTimer = 0;
   syncHud();
