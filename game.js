@@ -9,7 +9,8 @@ const restartButton = document.getElementById("restartButton");
 const world = {
   width: 3000,
   height: canvas.height,
-  gravity: 0.52
+  gravity: 0.46,
+  maxFallSpeed: 10.5
 };
 
 const keys = {
@@ -71,8 +72,8 @@ const playerTemplate = {
   h: 58,
   vx: 0,
   vy: 0,
-  speed: 4.15,
-  jump: -11.5,
+  speed: 3.15,
+  jump: -10.8,
   onGround: false,
   facing: 1
 };
@@ -87,6 +88,7 @@ let status;
 let invulnerableFrames;
 let respawnPoint;
 let lastFrameTime = 0;
+let frameAccumulator = 0;
 let coyoteTimer = 0;
 let jumpBufferTimer = 0;
 
@@ -103,6 +105,8 @@ function resetGame() {
     x: playerTemplate.x,
     y: playerTemplate.y
   };
+  lastFrameTime = 0;
+  frameAccumulator = 0;
   coyoteTimer = timing.coyoteFrames;
   jumpBufferTimer = 0;
   keys.left = false;
@@ -189,7 +193,7 @@ function update(delta) {
   player.x += player.vx * delta;
   player.x = Math.max(0, Math.min(world.width - player.w, player.x));
 
-  player.vy += world.gravity * delta;
+  player.vy = Math.min(world.maxFallSpeed, player.vy + world.gravity * delta);
   player.y += player.vy * delta;
   player.onGround = false;
 
@@ -226,6 +230,7 @@ function update(delta) {
   enemies.forEach((enemy) => {
     enemy.x += enemy.speed * enemy.dir * delta;
     if (enemy.x <= enemy.minX || enemy.x + enemy.w >= enemy.maxX) {
+      enemy.x = Math.max(enemy.minX, Math.min(enemy.maxX - enemy.w, enemy.x));
       enemy.dir *= -1;
     }
     if (rectsOverlap(player, enemy)) {
@@ -267,7 +272,8 @@ function update(delta) {
   }
 
   const targetCamera = player.x - canvas.width * 0.35;
-  cameraX = Math.max(0, Math.min(world.width - canvas.width, targetCamera));
+  const clampedTarget = Math.max(0, Math.min(world.width - canvas.width, targetCamera));
+  cameraX += (clampedTarget - cameraX) * 0.14 * delta;
 }
 
 function drawCloud(x, y, scale = 1) {
@@ -421,11 +427,15 @@ function loop(timestamp) {
     lastFrameTime = timestamp;
   }
 
-  const rawDelta = (timestamp - lastFrameTime) / (1000 / 60);
-  const delta = Math.min(Math.max(rawDelta, 0.75), 1.25);
+  const frameTime = Math.min(timestamp - lastFrameTime, 32);
   lastFrameTime = timestamp;
+  frameAccumulator += frameTime;
 
-  update(delta);
+  while (frameAccumulator >= 1000 / 60) {
+    update(1);
+    frameAccumulator -= 1000 / 60;
+  }
+
   draw();
   requestAnimationFrame(loop);
 }
@@ -460,6 +470,9 @@ window.addEventListener("keyup", (event) => {
   }
   if (event.code === "ArrowUp") {
     keys.jumpPressed = false;
+    if (player.vy < -4.5) {
+      player.vy *= 0.55;
+    }
   }
 });
 
