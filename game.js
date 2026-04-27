@@ -17,7 +17,8 @@ const keys = {
   left: false,
   right: false,
   jumpPressed: false,
-  shootPressed: false
+  shootPressed: false,
+  down: false
 };
 
 const timing = {
@@ -130,7 +131,8 @@ const playerTemplate = {
   jump: -11.8,
   onGround: false,
   facing: 1,
-  form: "small"
+  form: "small",
+  crouching: false
 };
 
 let player;
@@ -224,9 +226,38 @@ function setPlayerForm(form) {
 
   const prevBottom = player.y + player.h;
   player.form = form;
-  player.h = form === "small" ? 58 : 74;
+  player.h = form === "small" ? 58 : 68;
+  player.crouching = false;
   player.y = prevBottom - player.h;
   syncHud();
+}
+
+function canPlayerFit(height) {
+  const prevHeight = player.h;
+  const prevY = player.y;
+  const bottom = player.y + player.h;
+  player.h = height;
+  player.y = bottom - height;
+  const blocked = getSolidRects().some((rect) => rectsOverlap(player, rect));
+  player.h = prevHeight;
+  player.y = prevY;
+  return !blocked;
+}
+
+function applyCrouch(shouldCrouch) {
+  if (player.form === "small") {
+    return;
+  }
+
+  const targetHeight = shouldCrouch ? 52 : 68;
+  if (!shouldCrouch && !canPlayerFit(targetHeight)) {
+    return;
+  }
+
+  const bottom = player.y + player.h;
+  player.h = targetHeight;
+  player.y = bottom - targetHeight;
+  player.crouching = shouldCrouch;
 }
 
 function spawnFloatingCoin(x, y) {
@@ -605,6 +636,7 @@ function update(delta) {
   }
 
   player.vx = 0;
+  applyCrouch(keys.down && player.onGround);
   if (keys.left) {
     player.vx = -player.speed;
     player.facing = -1;
@@ -801,29 +833,28 @@ function drawPlayer() {
   }
 
   const x = player.x - cameraX;
-  const big = player.form === "super";
   const tall = player.form !== "small";
   const hatColor = player.form === "chef" ? "#ffffff" : "#db3128";
   const suitColor = player.form === "chef" ? "#fff6d6" : "#1c4fb9";
   const shirtColor = player.form === "chef" ? "#d84f2a" : "#c5322a";
   const bodyTop = player.y + 18;
-  const bodyHeight = tall ? 34 : 24;
-  const legY = tall ? player.y + 54 : player.y + 42;
+  const bodyHeight = player.crouching ? 18 : (tall ? 34 : 24);
+  const legY = player.crouching ? player.y + 38 : (tall ? player.y + 54 : player.y + 42);
 
   ctx.fillStyle = hatColor;
-  ctx.fillRect(x + 6, player.y + 4, 20, 8);
-  ctx.fillRect(x + 3, player.y + 10, 26, 8);
-  if (player.form === "chef") {
+  ctx.fillRect(x + 6, player.y + (player.crouching ? 10 : 4), 20, 8);
+  ctx.fillRect(x + 3, player.y + (player.crouching ? 16 : 10), 26, 8);
+  if (player.form === "chef" && !player.crouching) {
     ctx.fillRect(x + 8, player.y, 16, 6);
   }
   ctx.fillStyle = "#ffd0ad";
-  ctx.fillRect(x + 9, player.y + 14, 14, 12);
+  ctx.fillRect(x + 9, player.y + (player.crouching ? 20 : 14), 14, 12);
   ctx.fillStyle = shirtColor;
   ctx.fillRect(x + 5, bodyTop, 22, bodyHeight);
   ctx.fillStyle = suitColor;
-  ctx.fillRect(x + 6, player.y + 30, 8, bodyHeight + 6);
-  ctx.fillRect(x + 18, player.y + 30, 8, bodyHeight + 6);
-  if (player.form === "chef") {
+  ctx.fillRect(x + 6, player.y + 30, 8, bodyHeight + (player.crouching ? 2 : 6));
+  ctx.fillRect(x + 18, player.y + 30, 8, bodyHeight + (player.crouching ? 2 : 6));
+  if (player.form === "chef" && !player.crouching) {
     ctx.fillStyle = "#f5d26a";
     ctx.fillRect(x + 12, player.y + 36, 8, 8);
   }
@@ -1039,6 +1070,9 @@ window.addEventListener("keydown", (event) => {
   if (event.code === "ArrowRight") {
     keys.right = true;
   }
+  if (event.code === "ArrowDown") {
+    keys.down = true;
+  }
   if (event.code === "ArrowUp" && !keys.jumpPressed && status === "Running") {
     keys.jumpPressed = true;
     jumpBufferTimer = timing.jumpBufferFrames;
@@ -1061,7 +1095,9 @@ window.addEventListener("keyup", (event) => {
     keys.right = false;
   }
   if (event.code === "ArrowDown") {
+    keys.down = false;
     keys.shootPressed = false;
+    applyCrouch(false);
   }
   if (event.code === "ArrowUp") {
     keys.jumpPressed = false;
