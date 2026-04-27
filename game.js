@@ -9,12 +9,18 @@ const restartButton = document.getElementById("restartButton");
 const world = {
   width: 3000,
   height: canvas.height,
-  gravity: 0.5
+  gravity: 0.52
 };
 
 const keys = {
   left: false,
-  right: false
+  right: false,
+  jumpPressed: false
+};
+
+const timing = {
+  coyoteFrames: 7,
+  jumpBufferFrames: 9
 };
 
 const level = {
@@ -65,7 +71,7 @@ const playerTemplate = {
   h: 58,
   vx: 0,
   vy: 0,
-  speed: 3.6,
+  speed: 4.15,
   jump: -11.5,
   onGround: false,
   facing: 1
@@ -81,6 +87,8 @@ let status;
 let invulnerableFrames;
 let respawnPoint;
 let lastFrameTime = 0;
+let coyoteTimer = 0;
+let jumpBufferTimer = 0;
 
 function resetGame() {
   player = { ...playerTemplate };
@@ -95,6 +103,11 @@ function resetGame() {
     x: playerTemplate.x,
     y: playerTemplate.y
   };
+  coyoteTimer = timing.coyoteFrames;
+  jumpBufferTimer = 0;
+  keys.left = false;
+  keys.right = false;
+  keys.jumpPressed = false;
   syncHud();
 }
 
@@ -153,6 +166,8 @@ function hurtPlayer() {
   player.vx = 0;
   player.vy = 0;
   player.onGround = false;
+  coyoteTimer = timing.coyoteFrames;
+  jumpBufferTimer = 0;
   syncHud();
 }
 
@@ -180,6 +195,23 @@ function update(delta) {
 
   [...level.grounds, ...level.platforms].forEach((rect) => handlePlatformCollision(rect, delta));
   updateRespawnPoint();
+
+  if (player.onGround) {
+    coyoteTimer = timing.coyoteFrames;
+  } else {
+    coyoteTimer = Math.max(0, coyoteTimer - delta);
+  }
+
+  if (jumpBufferTimer > 0) {
+    jumpBufferTimer = Math.max(0, jumpBufferTimer - delta);
+  }
+
+  if (jumpBufferTimer > 0 && coyoteTimer > 0 && status === "Running") {
+    player.vy = player.jump;
+    player.onGround = false;
+    coyoteTimer = 0;
+    jumpBufferTimer = 0;
+  }
 
   if (player.y > canvas.height + 120) {
     hurtPlayer();
@@ -409,9 +441,9 @@ window.addEventListener("keydown", (event) => {
   if (event.code === "ArrowRight") {
     keys.right = true;
   }
-  if (event.code === "ArrowUp" && player.onGround && status === "Running") {
-    player.vy = player.jump;
-    player.onGround = false;
+  if (event.code === "ArrowUp" && !keys.jumpPressed && status === "Running") {
+    keys.jumpPressed = true;
+    jumpBufferTimer = timing.jumpBufferFrames;
   }
 });
 
@@ -425,6 +457,9 @@ window.addEventListener("keyup", (event) => {
   }
   if (event.code === "ArrowRight") {
     keys.right = false;
+  }
+  if (event.code === "ArrowUp") {
+    keys.jumpPressed = false;
   }
 });
 
