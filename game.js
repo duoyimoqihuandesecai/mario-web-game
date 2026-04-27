@@ -9,7 +9,7 @@ const restartButton = document.getElementById("restartButton");
 const world = {
   width: 3000,
   height: canvas.height,
-  gravity: 0.8
+  gravity: 0.5
 };
 
 const keys = {
@@ -48,9 +48,9 @@ const level = {
     { x: 2690, y: 220, r: 12 }, { x: 1560, y: 426, r: 12 }, { x: 2030, y: 426, r: 12 }
   ],
   enemies: [
-    { x: 610, y: 432, w: 40, h: 36, minX: 540, maxX: 740, dir: 1, speed: 1.5 },
-    { x: 1110, y: 432, w: 40, h: 36, minX: 920, maxX: 1330, dir: -1, speed: 1.7 },
-    { x: 1970, y: 432, w: 40, h: 36, minX: 1920, maxX: 2330, dir: 1, speed: 1.9 }
+    { x: 610, y: 432, w: 40, h: 36, minX: 540, maxX: 740, dir: 1, speed: 1.05 },
+    { x: 1110, y: 432, w: 40, h: 36, minX: 920, maxX: 1330, dir: -1, speed: 1.2 },
+    { x: 1970, y: 432, w: 40, h: 36, minX: 1920, maxX: 2330, dir: 1, speed: 1.35 }
   ],
   flag: { x: 2890, y: 160, poleH: 308 }
 };
@@ -65,8 +65,8 @@ const playerTemplate = {
   h: 58,
   vx: 0,
   vy: 0,
-  speed: 5,
-  jump: -15,
+  speed: 3.6,
+  jump: -11.5,
   onGround: false,
   facing: 1
 };
@@ -80,6 +80,7 @@ let lives;
 let status;
 let invulnerableFrames;
 let respawnPoint;
+let lastFrameTime = 0;
 
 function resetGame() {
   player = { ...playerTemplate };
@@ -112,8 +113,8 @@ function rectsOverlap(a, b) {
   );
 }
 
-function handlePlatformCollision(rect) {
-  const prevBottom = player.y + player.h - player.vy;
+function handlePlatformCollision(rect, delta) {
+  const prevBottom = player.y + player.h - player.vy * delta;
   const nextBottom = player.y + player.h;
   const withinX = player.x + player.w > rect.x && player.x < rect.x + rect.w;
 
@@ -155,7 +156,7 @@ function hurtPlayer() {
   syncHud();
 }
 
-function update() {
+function update(delta) {
   if (status !== "Running") {
     return;
   }
@@ -170,14 +171,14 @@ function update() {
     player.facing = 1;
   }
 
-  player.x += player.vx;
+  player.x += player.vx * delta;
   player.x = Math.max(0, Math.min(world.width - player.w, player.x));
 
-  player.vy += world.gravity;
-  player.y += player.vy;
+  player.vy += world.gravity * delta;
+  player.y += player.vy * delta;
   player.onGround = false;
 
-  [...level.grounds, ...level.platforms].forEach(handlePlatformCollision);
+  [...level.grounds, ...level.platforms].forEach((rect) => handlePlatformCollision(rect, delta));
   updateRespawnPoint();
 
   if (player.y > canvas.height + 120) {
@@ -191,7 +192,7 @@ function update() {
   });
 
   enemies.forEach((enemy) => {
-    enemy.x += enemy.speed * enemy.dir;
+    enemy.x += enemy.speed * enemy.dir * delta;
     if (enemy.x <= enemy.minX || enemy.x + enemy.w >= enemy.maxX) {
       enemy.dir *= -1;
     }
@@ -199,7 +200,7 @@ function update() {
       const stomp = player.vy > 2 && player.y + player.h - enemy.y < 20;
       if (stomp) {
         enemy.defeated = true;
-        player.vy = -10;
+        player.vy = -8;
       } else {
         hurtPlayer();
       }
@@ -230,7 +231,7 @@ function update() {
   }
 
   if (invulnerableFrames > 0) {
-    invulnerableFrames -= 1;
+    invulnerableFrames = Math.max(0, invulnerableFrames - delta);
   }
 
   const targetCamera = player.x - canvas.width * 0.35;
@@ -383,8 +384,16 @@ function draw() {
   drawStatusBanner();
 }
 
-function loop() {
-  update();
+function loop(timestamp) {
+  if (!lastFrameTime) {
+    lastFrameTime = timestamp;
+  }
+
+  const rawDelta = (timestamp - lastFrameTime) / (1000 / 60);
+  const delta = Math.min(Math.max(rawDelta, 0.75), 1.25);
+  lastFrameTime = timestamp;
+
+  update(delta);
   draw();
   requestAnimationFrame(loop);
 }
@@ -422,4 +431,4 @@ window.addEventListener("keyup", (event) => {
 restartButton.addEventListener("click", resetGame);
 
 resetGame();
-loop();
+requestAnimationFrame(loop);
