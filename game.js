@@ -592,10 +592,18 @@ function drawGround(rect) {
 
 function drawPlatform(rect) {
   const x = rect.x - cameraX;
-  ctx.fillStyle = "#b86f28";
-  ctx.fillRect(x, rect.y, rect.w, rect.h);
-  ctx.fillStyle = "#8e4f14";
-  ctx.fillRect(x, rect.y + rect.h - 6, rect.w, 6);
+  for (let offset = 0; offset < rect.w; offset += 36) {
+    ctx.fillStyle = "#bf6a28";
+    ctx.fillRect(x + offset, rect.y, 36, 36);
+    ctx.strokeStyle = "#7f3c12";
+    ctx.lineWidth = 2;
+    ctx.strokeRect(x + offset + 1, rect.y + 1, 34, 34);
+    ctx.fillStyle = "#8f4317";
+    ctx.fillRect(x + offset, rect.y + 11, 36, 3);
+    ctx.fillRect(x + offset, rect.y + 23, 36, 3);
+    ctx.fillRect(x + offset + 11, rect.y, 3, 14);
+    ctx.fillRect(x + offset + 24, rect.y + 12, 3, 14);
+  }
 }
 
 function drawPipe(pipe) {
