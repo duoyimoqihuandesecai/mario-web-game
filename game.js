@@ -5,6 +5,7 @@ const coinCountEl = document.getElementById("coinCount");
 const livesCountEl = document.getElementById("livesCount");
 const gameStateEl = document.getElementById("gameState");
 const restartButton = document.getElementById("restartButton");
+const touchButtons = Array.from(document.querySelectorAll(".touch-button"));
 
 const world = {
   width: 3200,
@@ -68,7 +69,7 @@ const level = {
     { x: 1972, y: 356, w: 36, h: 36, type: "brick", contains: null },
     { x: 2044, y: 356, w: 36, h: 36, type: "brick", contains: null },
     { x: 2420, y: 332, w: 36, h: 36, type: "brick", contains: null },
-    { x: 2492, y: 332, w: 36, h: 36, type: "brick", contains: null },
+    { x: 2456, y: 332, w: 36, h: 36, type: "brick", contains: null },
     { x: 2564, y: 332, w: 36, h: 36, type: "brick", contains: null }
   ],
   coins: [
@@ -82,17 +83,17 @@ const level = {
     { x: 2920, y: 420, r: 12 }
   ],
   enemies: [
-    { x: 264, y: 432, w: 40, h: 36, minX: 220, maxX: 340, dir: 1, speed: 0.82, kind: "goomba" },
-    { x: 760, y: 432, w: 40, h: 36, minX: 700, maxX: 900, dir: 1, speed: 0.9, kind: "goomba" },
-    { x: 920, y: 432, w: 40, h: 36, minX: 900, maxX: 1100, dir: 1, speed: 0.92, kind: "goomba" },
-    { x: 1080, y: 432, w: 40, h: 36, minX: 1020, maxX: 1400, dir: 1, speed: 0.96, kind: "goomba" },
-    { x: 1320, y: 432, w: 40, h: 36, minX: 1180, maxX: 1540, dir: -1, speed: 1.05, kind: "beetle" },
-    { x: 1580, y: 432, w: 40, h: 36, minX: 1560, maxX: 1660, dir: -1, speed: 0.88, kind: "goomba" },
-    { x: 1760, y: 432, w: 44, h: 40, minX: 1680, maxX: 1980, dir: -1, speed: 0.92, kind: "koopa" },
-    { x: 2160, y: 432, w: 44, h: 40, minX: 2110, maxX: 2520, dir: 1, speed: 0.95, kind: "koopa" },
-    { x: 2380, y: 432, w: 40, h: 36, minX: 2320, maxX: 2520, dir: -1, speed: 0.96, kind: "beetle" },
-    { x: 2680, y: 432, w: 40, h: 36, minX: 2620, maxX: 2780, dir: 1, speed: 0.9, kind: "goomba" },
-    { x: 2860, y: 432, w: 40, h: 36, minX: 2800, maxX: 3120, dir: 1, speed: 1.02, kind: "goomba" }
+    { x: 264, y: 432, w: 40, h: 36, dir: 1, speed: 0.82, kind: "goomba" },
+    { x: 760, y: 432, w: 40, h: 36, dir: 1, speed: 0.9, kind: "goomba" },
+    { x: 920, y: 432, w: 40, h: 36, dir: 1, speed: 0.92, kind: "goomba" },
+    { x: 1080, y: 432, w: 40, h: 36, dir: 1, speed: 0.96, kind: "goomba" },
+    { x: 1320, y: 432, w: 40, h: 36, dir: -1, speed: 1.05, kind: "beetle" },
+    { x: 1580, y: 432, w: 40, h: 36, dir: -1, speed: 0.88, kind: "goomba" },
+    { x: 1760, y: 432, w: 44, h: 40, dir: -1, speed: 0.92, kind: "koopa" },
+    { x: 2160, y: 432, w: 44, h: 40, dir: 1, speed: 0.95, kind: "koopa" },
+    { x: 2380, y: 432, w: 40, h: 36, dir: -1, speed: 0.96, kind: "beetle" },
+    { x: 2680, y: 432, w: 40, h: 36, dir: 1, speed: 0.9, kind: "goomba" },
+    { x: 2860, y: 432, w: 40, h: 36, dir: 1, speed: 1.02, kind: "goomba" }
   ],
   bushes: [
     { x: 40, y: 410, w: 120, h: 48 },
@@ -556,11 +557,6 @@ function updateEnemies(delta) {
       enemy.dir *= -1;
     });
 
-    if (enemy.x <= enemy.minX || enemy.x + enemy.w >= enemy.maxX) {
-      enemy.x = Math.max(enemy.minX, Math.min(enemy.maxX - enemy.w, enemy.x));
-      enemy.dir *= -1;
-    }
-
     enemy.y += enemy.vy * delta;
     getSolidRects().forEach((rect) => {
       if (!rectsOverlap(enemy, rect)) {
@@ -572,6 +568,43 @@ function updateEnemies(delta) {
       }
     });
 
+    const probeX = enemy.dir > 0 ? enemy.x + enemy.w + 4 : enemy.x - 4;
+    const probeY = enemy.y + enemy.h + 4;
+    const hasSupportAhead = getSolidRects().some(
+      (rect) => probeX >= rect.x && probeX <= rect.x + rect.w && probeY >= rect.y && probeY <= rect.y + rect.h + 4
+    );
+
+    if (!hasSupportAhead && enemy.vy === 0) {
+      enemy.dir *= -1;
+    }
+  });
+
+  for (let i = 0; i < enemies.length; i += 1) {
+    for (let j = i + 1; j < enemies.length; j += 1) {
+      const enemyA = enemies[i];
+      const enemyB = enemies[j];
+
+      if (!rectsOverlap(enemyA, enemyB)) {
+        continue;
+      }
+
+      if (enemyA.x <= enemyB.x) {
+        const overlap = enemyA.x + enemyA.w - enemyB.x;
+        enemyA.x -= overlap / 2 + 0.5;
+        enemyB.x += overlap / 2 + 0.5;
+        enemyA.dir = -1;
+        enemyB.dir = 1;
+      } else {
+        const overlap = enemyB.x + enemyB.w - enemyA.x;
+        enemyB.x -= overlap / 2 + 0.5;
+        enemyA.x += overlap / 2 + 0.5;
+        enemyB.dir = -1;
+        enemyA.dir = 1;
+      }
+    }
+  }
+
+  enemies.forEach((enemy) => {
     if (!rectsOverlap(player, enemy)) {
       return;
     }
@@ -1016,6 +1049,65 @@ function draw() {
   drawStatusBanner();
 }
 
+function triggerJump() {
+  if (!keys.jumpPressed && status === "Running") {
+    keys.jumpPressed = true;
+    jumpBufferTimer = timing.jumpBufferFrames;
+  }
+}
+
+function releaseJump() {
+  keys.jumpPressed = false;
+  if (player && player.vy < -4.5) {
+    player.vy *= 0.58;
+  }
+}
+
+function triggerShoot() {
+  if (!keys.shootPressed && status === "Running") {
+    keys.shootPressed = true;
+    spawnProjectile();
+  }
+}
+
+function releaseShoot() {
+  keys.shootPressed = false;
+}
+
+function setActionState(action, isPressed) {
+  if (action === "left") {
+    keys.left = isPressed;
+    return;
+  }
+  if (action === "right") {
+    keys.right = isPressed;
+    return;
+  }
+  if (action === "jump") {
+    if (isPressed) {
+      triggerJump();
+    } else {
+      releaseJump();
+    }
+    return;
+  }
+  if (action === "shoot") {
+    if (isPressed) {
+      triggerShoot();
+    } else {
+      releaseShoot();
+    }
+  }
+}
+
+function clearInputState() {
+  keys.left = false;
+  keys.right = false;
+  releaseJump();
+  releaseShoot();
+  touchButtons.forEach((button) => button.classList.remove("is-pressed"));
+}
+
 function loop(timestamp) {
   if (!lastFrameTime) {
     lastFrameTime = timestamp;
@@ -1040,18 +1132,16 @@ window.addEventListener("keydown", (event) => {
   }
 
   if (event.code === "ArrowLeft") {
-    keys.left = true;
+    setActionState("left", true);
   }
   if (event.code === "ArrowRight") {
-    keys.right = true;
+    setActionState("right", true);
   }
-  if (event.code === "ArrowUp" && !keys.jumpPressed && status === "Running") {
-    keys.jumpPressed = true;
-    jumpBufferTimer = timing.jumpBufferFrames;
+  if (event.code === "ArrowUp") {
+    setActionState("jump", true);
   }
-  if (event.code === "ArrowDown" && !keys.shootPressed && status === "Running") {
-    keys.shootPressed = true;
-    spawnProjectile();
+  if (event.code === "ArrowDown") {
+    setActionState("shoot", true);
   }
 });
 
@@ -1061,20 +1151,48 @@ window.addEventListener("keyup", (event) => {
   }
 
   if (event.code === "ArrowLeft") {
-    keys.left = false;
+    setActionState("left", false);
   }
   if (event.code === "ArrowRight") {
-    keys.right = false;
+    setActionState("right", false);
   }
   if (event.code === "ArrowDown") {
-    keys.shootPressed = false;
+    setActionState("shoot", false);
   }
   if (event.code === "ArrowUp") {
-    keys.jumpPressed = false;
-    if (player.vy < -4.5) {
-      player.vy *= 0.58;
-    }
+    setActionState("jump", false);
   }
+});
+
+window.addEventListener("blur", clearInputState);
+document.addEventListener("visibilitychange", () => {
+  if (document.hidden) {
+    clearInputState();
+  }
+});
+
+touchButtons.forEach((button) => {
+  const action = button.dataset.action;
+  if (!action) {
+    return;
+  }
+
+  const press = (event) => {
+    event.preventDefault();
+    button.classList.add("is-pressed");
+    setActionState(action, true);
+  };
+
+  const release = (event) => {
+    event.preventDefault();
+    button.classList.remove("is-pressed");
+    setActionState(action, false);
+  };
+
+  button.addEventListener("pointerdown", press);
+  button.addEventListener("pointerup", release);
+  button.addEventListener("pointercancel", release);
+  button.addEventListener("pointerleave", release);
 });
 
 restartButton.addEventListener("click", resetGame);
