@@ -16,7 +16,8 @@ const world = {
 const keys = {
   left: false,
   right: false,
-  jumpPressed: false
+  jumpPressed: false,
+  shootPressed: false
 };
 
 const timing = {
@@ -56,12 +57,12 @@ const level = {
     { x: 432, y: 284, w: 36, h: 36, type: "brick", contains: null },
     { x: 504, y: 284, w: 36, h: 36, type: "brick", contains: null },
     { x: 1150, y: 284, w: 36, h: 36, type: "question", contains: "coin" },
-    { x: 1222, y: 284, w: 36, h: 36, type: "brick", contains: null },
+    { x: 1222, y: 284, w: 36, h: 36, type: "question", contains: "flower" },
     { x: 1294, y: 284, w: 36, h: 36, type: "brick", contains: null },
     { x: 1850, y: 260, w: 36, h: 36, type: "question", contains: "coin" },
     { x: 1922, y: 260, w: 36, h: 36, type: "question", contains: "coin" },
     { x: 1994, y: 260, w: 36, h: 36, type: "brick", contains: null },
-    { x: 2500, y: 224, w: 36, h: 36, type: "question", contains: "mushroom" },
+    { x: 2500, y: 224, w: 36, h: 36, type: "question", contains: "flower" },
     { x: 2572, y: 224, w: 36, h: 36, type: "brick", contains: null },
     { x: 2644, y: 224, w: 36, h: 36, type: "question", contains: "coin" }
   ],
@@ -70,16 +71,19 @@ const level = {
     { x: 640, y: 350, r: 12 },
     { x: 676, y: 346, r: 12 },
     { x: 1020, y: 280, r: 12 },
-    { x: 1510, y: 430, r: 12 },
-    { x: 1960, y: 290, r: 12 },
-    { x: 2468, y: 256, r: 12 },
+    { x: 1604, y: 334, r: 12 },
+    { x: 2060, y: 296, r: 12 },
+    { x: 2468, y: 188, r: 12 },
     { x: 2920, y: 420, r: 12 }
   ],
   enemies: [
     { x: 264, y: 432, w: 40, h: 36, minX: 220, maxX: 340, dir: 1, speed: 0.82, kind: "goomba" },
-    { x: 760, y: 432, w: 40, h: 36, minX: 720, maxX: 880, dir: 1, speed: 0.9, kind: "goomba" },
-    { x: 1320, y: 432, w: 40, h: 36, minX: 1020, maxX: 1540, dir: -1, speed: 1.05, kind: "goomba" },
-    { x: 2160, y: 432, w: 44, h: 40, minX: 2110, maxX: 2520, dir: 1, speed: 0.95, kind: "koopa" }
+    { x: 760, y: 432, w: 40, h: 36, minX: 700, maxX: 900, dir: 1, speed: 0.9, kind: "goomba" },
+    { x: 1080, y: 432, w: 40, h: 36, minX: 1020, maxX: 1400, dir: 1, speed: 0.96, kind: "goomba" },
+    { x: 1320, y: 432, w: 40, h: 36, minX: 1180, maxX: 1540, dir: -1, speed: 1.05, kind: "beetle" },
+    { x: 1760, y: 432, w: 44, h: 40, minX: 1680, maxX: 1980, dir: -1, speed: 0.92, kind: "koopa" },
+    { x: 2160, y: 432, w: 44, h: 40, minX: 2110, maxX: 2520, dir: 1, speed: 0.95, kind: "koopa" },
+    { x: 2860, y: 432, w: 40, h: 36, minX: 2800, maxX: 3120, dir: 1, speed: 1.02, kind: "goomba" }
   ],
   bushes: [
     { x: 40, y: 410, w: 120, h: 48 },
@@ -137,6 +141,7 @@ let blocks;
 let powerups;
 let floatingCoins;
 let debrisParticles;
+let projectiles;
 let coinsCollected;
 let lives;
 let status;
@@ -146,6 +151,7 @@ let lastFrameTime = 0;
 let frameAccumulator = 0;
 let coyoteTimer = 0;
 let jumpBufferTimer = 0;
+let shootCooldown = 0;
 
 function resetGame() {
   player = { ...playerTemplate };
@@ -156,6 +162,7 @@ function resetGame() {
   powerups = [];
   floatingCoins = [];
   debrisParticles = [];
+  projectiles = [];
   coinsCollected = 0;
   lives = 3;
   status = "Running";
@@ -168,13 +175,21 @@ function resetGame() {
   keys.left = false;
   keys.right = false;
   keys.jumpPressed = false;
+  keys.shootPressed = false;
+  shootCooldown = 0;
   syncHud();
 }
 
 function syncHud() {
   coinCountEl.textContent = String(coinsCollected);
   livesCountEl.textContent = String(lives);
-  gameStateEl.textContent = player.form === "super" ? `${status} / Super` : status;
+  if (player.form === "chef") {
+    gameStateEl.textContent = `${status} / Chef`;
+  } else if (player.form === "super") {
+    gameStateEl.textContent = `${status} / Super`;
+  } else {
+    gameStateEl.textContent = status;
+  }
 }
 
 function rectsOverlap(a, b) {
@@ -209,7 +224,7 @@ function setPlayerForm(form) {
 
   const prevBottom = player.y + player.h;
   player.form = form;
-  player.h = form === "super" ? 74 : 58;
+  player.h = form === "small" ? 58 : 74;
   player.y = prevBottom - player.h;
   syncHud();
 }
@@ -246,15 +261,32 @@ function spawnBrickDebris(block) {
 
 function spawnPowerup(block) {
   powerups.push({
-    kind: "mushroom",
+    kind: block.contains,
     x: block.x + 2,
     y: block.y - 6,
     w: 32,
     h: 32,
-    vx: 1.2,
+    vx: block.contains === "flower" ? 0 : 1.2,
     vy: 0,
     emerging: 18
   });
+}
+
+function spawnProjectile() {
+  if (player.form !== "chef" || shootCooldown > 0) {
+    return;
+  }
+
+  projectiles.push({
+    x: player.x + (player.facing > 0 ? player.w : -10),
+    y: player.y + 34,
+    w: 14,
+    h: 14,
+    vx: 5.4 * player.facing,
+    vy: -1.8,
+    life: 96
+  });
+  shootCooldown = 18;
 }
 
 function activateBlock(block) {
@@ -279,7 +311,7 @@ function activateBlock(block) {
     coinsCollected += 1;
     spawnFloatingCoin(block.x + block.w / 2, block.y);
   }
-  if (block.contains === "mushroom") {
+  if (block.contains === "mushroom" || block.contains === "flower") {
     spawnPowerup(block);
   }
   syncHud();
@@ -343,6 +375,13 @@ function updateRespawnPoint() {
 
 function hurtPlayer() {
   if (invulnerableFrames > 0 || status !== "Running") {
+    return;
+  }
+
+  if (player.form === "chef") {
+    setPlayerForm("super");
+    invulnerableFrames = 120;
+    player.vy = -4.6;
     return;
   }
 
@@ -410,55 +449,118 @@ function updatePowerups(delta) {
       return;
     }
 
-    item.vy = Math.min(world.maxFallSpeed, item.vy + world.gravity * delta);
-    item.x += item.vx * delta;
+    if (item.kind !== "flower") {
+      item.vy = Math.min(world.maxFallSpeed, item.vy + world.gravity * delta);
+      item.x += item.vx * delta;
+    }
 
     getSolidRects().forEach((rect) => {
       if (!rectsOverlap(item, rect)) {
         return;
       }
 
-      if (item.vx > 0 && item.x + item.w > rect.x && item.x < rect.x) {
+      if (item.kind !== "flower" && item.vx > 0 && item.x + item.w > rect.x && item.x < rect.x) {
         item.x = rect.x - item.w;
         item.vx *= -1;
-      } else if (item.vx < 0 && item.x < rect.x + rect.w && item.x + item.w > rect.x + rect.w) {
+      } else if (item.kind !== "flower" && item.vx < 0 && item.x < rect.x + rect.w && item.x + item.w > rect.x + rect.w) {
         item.x = rect.x + rect.w;
         item.vx *= -1;
       }
     });
 
-    item.y += item.vy * delta;
-    getSolidRects().forEach((rect) => {
-      if (!rectsOverlap(item, rect)) {
-        return;
-      }
+    if (item.kind !== "flower") {
+      item.y += item.vy * delta;
+      getSolidRects().forEach((rect) => {
+        if (!rectsOverlap(item, rect)) {
+          return;
+        }
 
-      if (item.vy >= 0 && item.y + item.h <= rect.y + rect.h) {
-        item.y = rect.y - item.h;
-        item.vy = 0;
-      }
-    });
+        if (item.vy >= 0 && item.y + item.h <= rect.y + rect.h) {
+          item.y = rect.y - item.h;
+          item.vy = 0;
+        }
+      });
+    }
   });
 
   powerups = powerups.filter((item) => {
     if (rectsOverlap(player, item)) {
       if (item.kind === "mushroom") {
         setPlayerForm("super");
-        syncHud();
+      } else if (item.kind === "flower") {
+        setPlayerForm("chef");
       }
+      syncHud();
       return false;
     }
     return true;
   });
 }
 
+function updateProjectiles(delta) {
+  projectiles.forEach((shot) => {
+    shot.x += shot.vx * delta;
+    shot.y += shot.vy * delta;
+    shot.vy = Math.min(4.5, shot.vy + 0.16 * delta);
+    shot.life -= delta;
+
+    getSolidRects().forEach((rect) => {
+      if (!rectsOverlap(shot, rect)) {
+        return;
+      }
+      if (shot.vy > 0 && shot.y + shot.h <= rect.y + rect.h) {
+        shot.y = rect.y - shot.h;
+        shot.vy = -3.1;
+      } else {
+        shot.life = 0;
+      }
+    });
+  });
+
+  enemies.forEach((enemy) => {
+    projectiles.forEach((shot) => {
+      if (shot.life > 0 && rectsOverlap(shot, enemy)) {
+        shot.life = 0;
+        enemy.defeated = true;
+      }
+    });
+  });
+
+  projectiles = projectiles.filter((shot) => shot.life > 0 && shot.x > -40 && shot.x < world.width + 40);
+}
+
 function updateEnemies(delta) {
   enemies.forEach((enemy) => {
+    enemy.vy = Math.min(world.maxFallSpeed, (enemy.vy || 0) + world.gravity * delta);
     enemy.x += enemy.speed * enemy.dir * delta;
+
+    getSolidRects().forEach((rect) => {
+      if (!rectsOverlap(enemy, rect)) {
+        return;
+      }
+      if (enemy.dir > 0) {
+        enemy.x = rect.x - enemy.w;
+      } else {
+        enemy.x = rect.x + rect.w;
+      }
+      enemy.dir *= -1;
+    });
+
     if (enemy.x <= enemy.minX || enemy.x + enemy.w >= enemy.maxX) {
       enemy.x = Math.max(enemy.minX, Math.min(enemy.maxX - enemy.w, enemy.x));
       enemy.dir *= -1;
     }
+
+    enemy.y += enemy.vy * delta;
+    getSolidRects().forEach((rect) => {
+      if (!rectsOverlap(enemy, rect)) {
+        return;
+      }
+      if (enemy.vy >= 0 && enemy.y + enemy.h <= rect.y + rect.h) {
+        enemy.y = rect.y - enemy.h;
+        enemy.vy = 0;
+      }
+    });
 
     if (!rectsOverlap(player, enemy)) {
       return;
@@ -498,6 +600,7 @@ function update(delta) {
     updateBlocks(delta);
     updateFloatingCoins(delta);
     updateDebris(delta);
+    updateProjectiles(delta);
     return;
   }
 
@@ -518,6 +621,7 @@ function update(delta) {
   updateFloatingCoins(delta);
   updateDebris(delta);
   updatePowerups(delta);
+  updateProjectiles(delta);
 
   if (player.onGround) {
     coyoteTimer = timing.coyoteFrames;
@@ -560,6 +664,9 @@ function update(delta) {
 
   if (invulnerableFrames > 0) {
     invulnerableFrames = Math.max(0, invulnerableFrames - delta);
+  }
+  if (shootCooldown > 0) {
+    shootCooldown = Math.max(0, shootCooldown - delta);
   }
 
   const targetCamera = player.x - canvas.width * 0.35;
@@ -695,25 +802,36 @@ function drawPlayer() {
 
   const x = player.x - cameraX;
   const big = player.form === "super";
-  const legY = big ? player.y + 54 : player.y + 40;
-  const bodyH = big ? 34 : 24;
+  const tall = player.form !== "small";
+  const hatColor = player.form === "chef" ? "#ffffff" : "#db3128";
+  const suitColor = player.form === "chef" ? "#fff6d6" : "#1c4fb9";
+  const shirtColor = player.form === "chef" ? "#d84f2a" : "#c5322a";
+  const bodyTop = player.y + 18;
+  const bodyHeight = tall ? 34 : 24;
+  const legY = tall ? player.y + 54 : player.y + 42;
 
-  ctx.fillStyle = "#db3128";
-  ctx.fillRect(x + 8, player.y + 5, player.w - 16, 10);
-  ctx.fillRect(x + 4, player.y + 12, player.w - 8, 10);
+  ctx.fillStyle = hatColor;
+  ctx.fillRect(x + 6, player.y + 4, 20, 8);
+  ctx.fillRect(x + 3, player.y + 10, 26, 8);
+  if (player.form === "chef") {
+    ctx.fillRect(x + 8, player.y, 16, 6);
+  }
   ctx.fillStyle = "#ffd0ad";
-  ctx.fillRect(x + 10, player.y + 16, player.w - 20, 12);
-  ctx.fillStyle = "#c5322a";
-  ctx.fillRect(x + 4, player.y + 24, player.w - 8, bodyH);
-  ctx.fillStyle = "#1c4fb9";
-  ctx.fillRect(x + 7, player.y + 30, 10, bodyH + 4);
-  ctx.fillRect(x + 25, player.y + 30, 10, bodyH + 4);
-  ctx.fillRect(x + 15, player.y + 36, 12, 8);
+  ctx.fillRect(x + 9, player.y + 14, 14, 12);
+  ctx.fillStyle = shirtColor;
+  ctx.fillRect(x + 5, bodyTop, 22, bodyHeight);
+  ctx.fillStyle = suitColor;
+  ctx.fillRect(x + 6, player.y + 30, 8, bodyHeight + 6);
+  ctx.fillRect(x + 18, player.y + 30, 8, bodyHeight + 6);
+  if (player.form === "chef") {
+    ctx.fillStyle = "#f5d26a";
+    ctx.fillRect(x + 12, player.y + 36, 8, 8);
+  }
   ctx.fillStyle = "#47260f";
-  ctx.fillRect(x + 6, legY, 11, big ? 20 : 16);
-  ctx.fillRect(x + 25, legY, 11, big ? 20 : 16);
-  ctx.fillStyle = "#7e3c16";
-  ctx.fillRect(x + (player.facing > 0 ? 27 : 7), player.y + 18, 6, 6);
+  ctx.fillRect(x + 6, legY, 8, tall ? 18 : 14);
+  ctx.fillRect(x + 18, legY, 8, tall ? 18 : 14);
+  ctx.fillStyle = "#2a1a12";
+  ctx.fillRect(x + (player.facing > 0 ? 18 : 10), player.y + 18, 4, 4);
 }
 
 function drawEnemy(enemy) {
@@ -727,6 +845,14 @@ function drawEnemy(enemy) {
     ctx.fillStyle = "#2f251e";
     ctx.fillRect(x + 4, enemy.y + 28, 10, 12);
     ctx.fillRect(x + 30, enemy.y + 28, 10, 12);
+  } else if (enemy.kind === "beetle") {
+    ctx.fillStyle = "#2a3158";
+    ctx.fillRect(x + 4, enemy.y + 8, enemy.w - 8, enemy.h - 8);
+    ctx.fillStyle = "#7380ba";
+    ctx.fillRect(x + 10, enemy.y + 4, enemy.w - 20, 10);
+    ctx.fillStyle = "#131829";
+    ctx.fillRect(x + 5, enemy.y + 26, 8, 10);
+    ctx.fillRect(x + 27, enemy.y + 26, 8, 10);
   } else {
     ctx.fillStyle = "#98623a";
     ctx.fillRect(x + 2, enemy.y + 10, enemy.w - 4, enemy.h - 10);
@@ -760,14 +886,42 @@ function drawFloatingCoin(coin) {
 
 function drawPowerup(item) {
   const x = item.x - cameraX;
-  ctx.fillStyle = "#f44436";
-  ctx.fillRect(x + 6, item.y + 3, 20, 10);
-  ctx.fillRect(x + 2, item.y + 11, 28, 8);
-  ctx.fillStyle = "#fff2d2";
-  ctx.fillRect(x + 7, item.y + 14, 18, 10);
-  ctx.fillStyle = "#f2efe5";
-  ctx.fillRect(x + 10, item.y + 21, 4, 5);
-  ctx.fillRect(x + 18, item.y + 21, 4, 5);
+  if (item.kind === "flower") {
+    ctx.fillStyle = "#2ab34f";
+    ctx.fillRect(x + 13, item.y + 16, 6, 16);
+    ctx.fillStyle = "#f4d93f";
+    ctx.beginPath();
+    ctx.arc(x + 16, item.y + 14, 7, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = "#ff5a40";
+    ctx.beginPath();
+    ctx.arc(x + 16, item.y + 6, 7, 0, Math.PI * 2);
+    ctx.arc(x + 8, item.y + 14, 7, 0, Math.PI * 2);
+    ctx.arc(x + 24, item.y + 14, 7, 0, Math.PI * 2);
+    ctx.arc(x + 16, item.y + 22, 7, 0, Math.PI * 2);
+    ctx.fill();
+  } else {
+    ctx.fillStyle = "#f44436";
+    ctx.fillRect(x + 6, item.y + 3, 20, 10);
+    ctx.fillRect(x + 2, item.y + 11, 28, 8);
+    ctx.fillStyle = "#fff2d2";
+    ctx.fillRect(x + 7, item.y + 14, 18, 10);
+    ctx.fillStyle = "#f2efe5";
+    ctx.fillRect(x + 10, item.y + 21, 4, 5);
+    ctx.fillRect(x + 18, item.y + 21, 4, 5);
+  }
+}
+
+function drawProjectile(shot) {
+  const x = shot.x - cameraX;
+  ctx.fillStyle = "#fff4a3";
+  ctx.beginPath();
+  ctx.arc(x + 7, shot.y + 7, 7, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = "#ffbf2f";
+  ctx.beginPath();
+  ctx.arc(x + 7, shot.y + 7, 4, 0, Math.PI * 2);
+  ctx.fill();
 }
 
 function drawDebris(piece) {
@@ -848,6 +1002,7 @@ function draw() {
   floatingCoins.forEach(drawFloatingCoin);
   debrisParticles.forEach(drawDebris);
   powerups.forEach(drawPowerup);
+  projectiles.forEach(drawProjectile);
   enemies.forEach(drawEnemy);
   drawFlag();
   drawCastle();
@@ -888,6 +1043,10 @@ window.addEventListener("keydown", (event) => {
     keys.jumpPressed = true;
     jumpBufferTimer = timing.jumpBufferFrames;
   }
+  if (event.code === "ArrowDown" && !keys.shootPressed && status === "Running") {
+    keys.shootPressed = true;
+    spawnProjectile();
+  }
 });
 
 window.addEventListener("keyup", (event) => {
@@ -900,6 +1059,9 @@ window.addEventListener("keyup", (event) => {
   }
   if (event.code === "ArrowRight") {
     keys.right = false;
+  }
+  if (event.code === "ArrowDown") {
+    keys.shootPressed = false;
   }
   if (event.code === "ArrowUp") {
     keys.jumpPressed = false;
