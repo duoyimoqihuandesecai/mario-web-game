@@ -10,29 +10,43 @@
   <main class="page">
     <section class="hud">
       <div class="brand">
+        <span class="brand-kicker">Edge Web Game</span>
         <h1>Mario Adventure</h1>
-        <p>Hit the question blocks right in front of you, grab a mushroom, then run for the flag.</p>
+        <p>顶问号方块，吃到蘑菇和花，一路冲到终点旗杆。</p>
       </div>
       <div class="stats">
         <div class="stat">
-          <span class="label">Coins</span>
+          <span class="label">金币</span>
           <strong id="coinCount">0</strong>
         </div>
         <div class="stat">
-          <span class="label">Lives</span>
+          <span class="label">生命</span>
           <strong id="livesCount">3</strong>
         </div>
         <div class="stat">
-          <span class="label">State</span>
+          <span class="label">状态</span>
           <strong id="gameState">Running</strong>
         </div>
-        <button id="restartButton" type="button">Restart</button>
+        <button id="restartButton" type="button">重新开始</button>
       </div>
     </section>
 
     <section class="game-shell">
       <canvas id="gameCanvas" width="960" height="540" aria-label="Mario web game canvas"></canvas>
-      <div class="mobile-tip">Best played with a keyboard in Edge.</div>
+      <div class="touch-controls" aria-label="Mobile game controls">
+        <div class="dpad" aria-hidden="false">
+          <span class="dpad-gap" aria-hidden="true"></span>
+          <button class="touch-button touch-up" type="button" data-action="jump" aria-label="Jump">↑</button>
+          <span class="dpad-gap" aria-hidden="true"></span>
+          <button class="touch-button touch-left" type="button" data-action="left" aria-label="Move left">←</button>
+          <button class="touch-button touch-down" type="button" data-action="shoot" aria-label="Shoot fireball">↓</button>
+          <button class="touch-button touch-right" type="button" data-action="right" aria-label="Move right">→</button>
+          <span class="dpad-gap" aria-hidden="true"></span>
+          <span class="dpad-gap" aria-hidden="true"></span>
+          <span class="dpad-gap" aria-hidden="true"></span>
+        </div>
+      </div>
+      <div class="mobile-tip">电脑端可用键盘方向键，手机端可直接点击虚拟方向键。</div>
     </section>
   </main>
 
