@@ -1,0 +1,112 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: "Segoe UI", "Microsoft YaHei", sans-serif;
+  background:
+    radial-gradient(circle at top, #8ed2ff 0%, #5bb7ff 35%, #1c75d1 100%);
+  color: #10203a;
+}
+
+.page {
+  min-height: 100vh;
+  display: grid;
+  grid-template-rows: auto 1fr;
+}
+
+.hud {
+  display: flex;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 20px 24px 12px;
+  align-items: end;
+}
+
+.brand h1 {
+  margin: 0;
+  font-size: clamp(28px, 4vw, 42px);
+}
+
+.brand p {
+  margin: 8px 0 0;
+  font-size: 15px;
+}
+
+.stats {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.stat,
+#restartButton {
+  min-width: 94px;
+  height: 64px;
+  padding: 10px 14px;
+  border: 3px solid #173d7a;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 5px 0 rgba(20, 58, 119, 0.25);
+}
+
+.stat {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.label {
+  font-size: 12px;
+  opacity: 0.75;
+}
+
+.stat strong {
+  font-size: 24px;
+}
+
+#restartButton {
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+#restartButton:hover {
+  transform: translateY(1px);
+}
+
+.game-shell {
+  padding: 12px 24px 28px;
+  display: grid;
+  justify-items: center;
+  align-content: start;
+  gap: 10px;
+}
+
+#gameCanvas {
+  width: min(100%, 1280px);
+  aspect-ratio: 16 / 9;
+  border: 4px solid #173d7a;
+  border-radius: 8px;
+  background: linear-gradient(#6bd0ff 0%, #9ce6ff 50%, #d8f4ff 100%);
+  box-shadow: 0 16px 30px rgba(8, 38, 82, 0.28);
+}
+
+.mobile-tip {
+  font-size: 13px;
+  color: #f7fbff;
+}
+
+@media (max-width: 860px) {
+  .hud {
+    align-items: start;
+    flex-direction: column;
+  }
+
+  .stats {
+    justify-content: start;
+  }
+}
