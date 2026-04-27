@@ -33,21 +33,17 @@ const level = {
     { x: 2070, y: 468, w: 610, h: 72 },
     { x: 2770, y: 468, w: 430, h: 72 }
   ],
-  platforms: [
-    { x: 900, y: 320, w: 108, h: 18 },
-    { x: 1900, y: 332, w: 108, h: 18 },
-    { x: 2420, y: 296, w: 108, h: 18 }
-  ],
+  platforms: [],
   pipes: [
     { x: 620, y: 396, w: 72, h: 72 },
     { x: 1460, y: 372, w: 88, h: 96 },
     { x: 2280, y: 404, w: 72, h: 64 }
   ],
   hazards: [
-    { x: 920, y: 500, w: 70, h: 40 },
-    { x: 1560, y: 500, w: 100, h: 40 },
-    { x: 1990, y: 500, w: 80, h: 40 },
-    { x: 2690, y: 500, w: 80, h: 40 }
+    { x: 920, y: 432, w: 70, h: 36 },
+    { x: 1560, y: 432, w: 100, h: 36 },
+    { x: 1990, y: 432, w: 80, h: 36 },
+    { x: 2690, y: 432, w: 80, h: 36 }
   ],
   blocks: [
     { x: 360, y: 320, w: 36, h: 36, type: "question", contains: "coin" },
@@ -57,14 +53,23 @@ const level = {
     { x: 432, y: 212, w: 36, h: 36, type: "brick", contains: null },
     { x: 504, y: 212, w: 36, h: 36, type: "brick", contains: null },
     { x: 1150, y: 284, w: 36, h: 36, type: "question", contains: "coin" },
-    { x: 1222, y: 212, w: 36, h: 36, type: "question", contains: "flower" },
+    { x: 1222, y: 248, w: 36, h: 36, type: "question", contains: "flower" },
     { x: 1294, y: 284, w: 36, h: 36, type: "brick", contains: null },
     { x: 1850, y: 260, w: 36, h: 36, type: "question", contains: "coin" },
     { x: 1922, y: 188, w: 36, h: 36, type: "question", contains: "coin" },
     { x: 1994, y: 260, w: 36, h: 36, type: "brick", contains: null },
-    { x: 2500, y: 224, w: 36, h: 36, type: "question", contains: "flower" },
+    { x: 2500, y: 248, w: 36, h: 36, type: "question", contains: "flower" },
     { x: 2572, y: 152, w: 36, h: 36, type: "brick", contains: null },
-    { x: 2644, y: 224, w: 36, h: 36, type: "question", contains: "coin" }
+    { x: 2644, y: 224, w: 36, h: 36, type: "question", contains: "coin" },
+    { x: 900, y: 320, w: 36, h: 36, type: "brick", contains: null },
+    { x: 972, y: 320, w: 36, h: 36, type: "brick", contains: null },
+    { x: 1044, y: 320, w: 36, h: 36, type: "brick", contains: null },
+    { x: 1900, y: 332, w: 36, h: 36, type: "brick", contains: null },
+    { x: 1972, y: 332, w: 36, h: 36, type: "brick", contains: null },
+    { x: 2044, y: 332, w: 36, h: 36, type: "brick", contains: null },
+    { x: 2420, y: 296, w: 36, h: 36, type: "brick", contains: null },
+    { x: 2492, y: 296, w: 36, h: 36, type: "brick", contains: null },
+    { x: 2564, y: 296, w: 36, h: 36, type: "brick", contains: null }
   ],
   coins: [
     { x: 648, y: 286, r: 12 },
