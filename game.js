@@ -780,7 +780,7 @@ function drawBlock(block) {
     ctx.fillRect(x + 18, y + 12, 5, 5);
     ctx.fillRect(x + 12, y + 17, 5, 5);
     ctx.fillRect(x + 14, y + 25, 8, 4);
-  } else if (block.type === "brick") {
+  } else {
     ctx.fillStyle = "#bf6a28";
     ctx.fillRect(x, y, block.w, block.h);
     ctx.strokeStyle = "#7f3c12";
@@ -791,9 +791,6 @@ function drawBlock(block) {
     ctx.fillRect(x, y + 23, block.w, 3);
     ctx.fillRect(x + 11, y, 3, 14);
     ctx.fillRect(x + 24, y + 12, 3, 14);
-  } else {
-    ctx.fillStyle = "#b79b6a";
-    ctx.fillRect(x, y, block.w, block.h);
   }
 }
 
