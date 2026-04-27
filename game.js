@@ -79,6 +79,7 @@ let score;
 let lives;
 let status;
 let invulnerableFrames;
+let respawnPoint;
 
 function resetGame() {
   player = { ...playerTemplate };
@@ -89,6 +90,10 @@ function resetGame() {
   lives = 3;
   status = "Running";
   invulnerableFrames = 0;
+  respawnPoint = {
+    x: playerTemplate.x,
+    y: playerTemplate.y
+  };
   syncHud();
 }
 
@@ -119,6 +124,17 @@ function handlePlatformCollision(rect) {
   }
 }
 
+function updateRespawnPoint() {
+  if (!player.onGround) {
+    return;
+  }
+
+  respawnPoint = {
+    x: player.x,
+    y: player.y
+  };
+}
+
 function hurtPlayer() {
   if (invulnerableFrames > 0 || status !== "Running") {
     return;
@@ -131,10 +147,11 @@ function hurtPlayer() {
     status = "Defeat";
   }
 
-  player.x = Math.max(40, player.x - 120);
-  player.y = 260;
+  player.x = respawnPoint.x;
+  player.y = Math.max(120, respawnPoint.y - 12);
   player.vx = 0;
-  player.vy = -6;
+  player.vy = 0;
+  player.onGround = false;
   syncHud();
 }
 
@@ -161,6 +178,7 @@ function update() {
   player.onGround = false;
 
   [...level.grounds, ...level.platforms].forEach(handlePlatformCollision);
+  updateRespawnPoint();
 
   if (player.y > canvas.height + 120) {
     hurtPlayer();
@@ -372,19 +390,27 @@ function loop() {
 }
 
 window.addEventListener("keydown", (event) => {
+  if (["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(event.code)) {
+    event.preventDefault();
+  }
+
   if (event.code === "ArrowLeft") {
     keys.left = true;
   }
   if (event.code === "ArrowRight") {
     keys.right = true;
   }
-  if (event.code === "Space" && player.onGround && status === "Running") {
+  if (event.code === "ArrowUp" && player.onGround && status === "Running") {
     player.vy = player.jump;
     player.onGround = false;
   }
 });
 
 window.addEventListener("keyup", (event) => {
+  if (["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(event.code)) {
+    event.preventDefault();
+  }
+
   if (event.code === "ArrowLeft") {
     keys.left = false;
   }
