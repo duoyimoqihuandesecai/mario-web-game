@@ -51,10 +51,6 @@ const level = {
     { x: 2690, y: 500, w: 80, h: 40 }
   ],
   blocks: [
-    { x: 180, y: 300, w: 36, h: 36, type: "question", contains: "coin" },
-    { x: 216, y: 300, w: 36, h: 36, type: "brick", contains: null },
-    { x: 252, y: 300, w: 36, h: 36, type: "question", contains: "mushroom" },
-    { x: 288, y: 300, w: 36, h: 36, type: "brick", contains: null },
     { x: 420, y: 320, w: 36, h: 36, type: "question", contains: "coin" },
     { x: 456, y: 320, w: 36, h: 36, type: "brick", contains: null },
     { x: 492, y: 320, w: 36, h: 36, type: "question", contains: "mushroom" },
@@ -70,8 +66,6 @@ const level = {
     { x: 2572, y: 224, w: 36, h: 36, type: "question", contains: "coin" }
   ],
   coins: [
-    { x: 198, y: 262, r: 12 },
-    { x: 270, y: 262, r: 12 },
     { x: 252, y: 320, r: 12 },
     { x: 640, y: 350, r: 12 },
     { x: 676, y: 346, r: 12 },
