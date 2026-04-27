@@ -26,7 +26,7 @@ const timing = {
 
 const level = {
   grounds: [
-    { x: 0, y: 468, w: 520, h: 72 },
+    { x: 0, y: 468, w: 560, h: 72 },
     { x: 600, y: 468, w: 280, h: 72 },
     { x: 950, y: 468, w: 610, h: 72 },
     { x: 1660, y: 468, w: 330, h: 72 },
@@ -34,13 +34,14 @@ const level = {
     { x: 2770, y: 468, w: 430, h: 72 }
   ],
   platforms: [
-    { x: 220, y: 360, w: 72, h: 18 },
-    { x: 315, y: 360, w: 72, h: 18 },
+    { x: 210, y: 360, w: 72, h: 18 },
+    { x: 305, y: 360, w: 72, h: 18 },
     { x: 900, y: 320, w: 108, h: 18 },
     { x: 1900, y: 332, w: 108, h: 18 },
     { x: 2420, y: 296, w: 108, h: 18 }
   ],
   pipes: [
+    { x: 360, y: 396, w: 72, h: 72 },
     { x: 720, y: 388, w: 72, h: 80 },
     { x: 1460, y: 372, w: 88, h: 96 },
     { x: 2280, y: 404, w: 72, h: 64 }
@@ -53,6 +54,10 @@ const level = {
     { x: 2690, y: 500, w: 80, h: 40 }
   ],
   blocks: [
+    { x: 180, y: 300, w: 36, h: 36, type: "question", contains: "coin" },
+    { x: 216, y: 300, w: 36, h: 36, type: "brick", contains: null },
+    { x: 252, y: 300, w: 36, h: 36, type: "question", contains: "mushroom" },
+    { x: 288, y: 300, w: 36, h: 36, type: "brick", contains: null },
     { x: 420, y: 320, w: 36, h: 36, type: "question", contains: "coin" },
     { x: 456, y: 320, w: 36, h: 36, type: "brick", contains: null },
     { x: 492, y: 320, w: 36, h: 36, type: "question", contains: "mushroom" },
@@ -68,6 +73,8 @@ const level = {
     { x: 2572, y: 224, w: 36, h: 36, type: "question", contains: "coin" }
   ],
   coins: [
+    { x: 198, y: 262, r: 12 },
+    { x: 270, y: 262, r: 12 },
     { x: 252, y: 320, r: 12 },
     { x: 676, y: 346, r: 12 },
     { x: 1020, y: 280, r: 12 },
@@ -77,17 +84,20 @@ const level = {
     { x: 2920, y: 420, r: 12 }
   ],
   enemies: [
+    { x: 500, y: 432, w: 40, h: 36, minX: 440, maxX: 620, dir: 1, speed: 0.9, kind: "goomba" },
     { x: 660, y: 432, w: 40, h: 36, minX: 620, maxX: 840, dir: 1, speed: 0.95, kind: "goomba" },
     { x: 1320, y: 432, w: 40, h: 36, minX: 1020, maxX: 1540, dir: -1, speed: 1.05, kind: "goomba" },
     { x: 2160, y: 432, w: 44, h: 40, minX: 2110, maxX: 2520, dir: 1, speed: 0.95, kind: "koopa" }
   ],
   bushes: [
+    { x: 40, y: 410, w: 120, h: 48 },
     { x: 120, y: 410, w: 120, h: 48 },
     { x: 1080, y: 408, w: 140, h: 52 },
     { x: 1720, y: 410, w: 120, h: 48 },
     { x: 2860, y: 408, w: 140, h: 52 }
   ],
   hills: [
+    { x: -20, y: 300, w: 220, h: 146, color: "#73cf57" },
     { x: 80, y: 286, w: 230, h: 160, color: "#64c64f" },
     { x: 760, y: 266, w: 290, h: 180, color: "#73cf57" },
     { x: 1600, y: 280, w: 240, h: 165, color: "#64c64f" },
