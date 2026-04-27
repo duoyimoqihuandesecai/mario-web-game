@@ -144,7 +144,7 @@ let enemies;
 let blocks;
 let powerups;
 let floatingCoins;
-let score;
+let coinsCollected;
 let lives;
 let status;
 let invulnerableFrames;
@@ -159,10 +159,10 @@ function resetGame() {
   cameraX = 0;
   coins = initialCoins.map((coin) => ({ ...coin }));
   enemies = initialEnemies.map((enemy) => ({ ...enemy }));
-  blocks = initialBlocks.map((block) => ({ ...block }));
+  blocks = initialBlocks.map((block) => ({ ...block, broken: false }));
   powerups = [];
   floatingCoins = [];
-  score = 0;
+  coinsCollected = 0;
   lives = 3;
   status = "Running";
   invulnerableFrames = 0;
@@ -178,7 +178,7 @@ function resetGame() {
 }
 
 function syncHud() {
-  coinCountEl.textContent = String(score);
+  coinCountEl.textContent = String(coinsCollected);
   livesCountEl.textContent = String(lives);
   gameStateEl.textContent = player.form === "super" ? `${status} / Super` : status;
 }
@@ -197,7 +197,7 @@ function getSolidRects() {
     ...level.grounds,
     ...level.platforms,
     ...level.pipes,
-    ...blocks.map((block) => ({
+    ...blocks.filter((block) => !block.broken).map((block) => ({
       x: block.x,
       y: block.y + block.bumpOffset,
       w: block.w,
@@ -243,6 +243,16 @@ function spawnPowerup(block) {
 }
 
 function activateBlock(block) {
+  if (block.broken) {
+    return;
+  }
+
+  if (block.type === "brick" && player.form === "super") {
+    block.broken = true;
+    block.used = true;
+    return;
+  }
+
   block.bumpVelocity = -2.8;
   if (block.used) {
     return;
@@ -250,7 +260,7 @@ function activateBlock(block) {
 
   block.used = true;
   if (block.contains === "coin") {
-    score += 1;
+    coinsCollected += 1;
     spawnFloatingCoin(block.x + block.w / 2, block.y);
   }
   if (block.contains === "mushroom") {
@@ -408,7 +418,6 @@ function updatePowerups(delta) {
     if (rectsOverlap(player, item)) {
       if (item.kind === "mushroom") {
         setPlayerForm("super");
-        score += 2;
         syncHud();
       }
       return false;
@@ -433,7 +442,6 @@ function updateEnemies(delta) {
     if (stomp) {
       enemy.defeated = true;
       player.vy = -8;
-      score += 1;
       syncHud();
     } else {
       hurtPlayer();
@@ -453,7 +461,7 @@ function updateCoins() {
     const nearY = player.y + player.h > coin.y - coin.r && player.y < coin.y + coin.r;
     if (nearX && nearY) {
       coin.collected = true;
-      score += 1;
+      coinsCollected += 1;
       syncHud();
     }
   });
@@ -516,7 +524,7 @@ function update(delta) {
   if (
     player.x + player.w > level.flag.x - 10 &&
     player.y + player.h > level.flag.y &&
-    score >= 8
+    coinsCollected >= 8
   ) {
     status = "Victory";
     syncHud();
@@ -617,6 +625,10 @@ function drawPipe(pipe) {
 }
 
 function drawBlock(block) {
+  if (block.broken) {
+    return;
+  }
+
   const x = block.x - cameraX;
   const y = block.y + block.bumpOffset;
 
