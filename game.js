@@ -17,8 +17,7 @@ const keys = {
   left: false,
   right: false,
   jumpPressed: false,
-  shootPressed: false,
-  down: false
+  shootPressed: false
 };
 
 const timing = {
@@ -55,16 +54,16 @@ const level = {
     { x: 432, y: 320, w: 36, h: 36, type: "brick", contains: null },
     { x: 504, y: 320, w: 36, h: 36, type: "question", contains: "mushroom" },
     { x: 576, y: 320, w: 36, h: 36, type: "brick", contains: null },
-    { x: 432, y: 284, w: 36, h: 36, type: "brick", contains: null },
-    { x: 504, y: 284, w: 36, h: 36, type: "brick", contains: null },
+    { x: 432, y: 212, w: 36, h: 36, type: "brick", contains: null },
+    { x: 504, y: 212, w: 36, h: 36, type: "brick", contains: null },
     { x: 1150, y: 284, w: 36, h: 36, type: "question", contains: "coin" },
-    { x: 1222, y: 284, w: 36, h: 36, type: "question", contains: "flower" },
+    { x: 1222, y: 212, w: 36, h: 36, type: "question", contains: "flower" },
     { x: 1294, y: 284, w: 36, h: 36, type: "brick", contains: null },
     { x: 1850, y: 260, w: 36, h: 36, type: "question", contains: "coin" },
-    { x: 1922, y: 260, w: 36, h: 36, type: "question", contains: "coin" },
+    { x: 1922, y: 188, w: 36, h: 36, type: "question", contains: "coin" },
     { x: 1994, y: 260, w: 36, h: 36, type: "brick", contains: null },
     { x: 2500, y: 224, w: 36, h: 36, type: "question", contains: "flower" },
-    { x: 2572, y: 224, w: 36, h: 36, type: "brick", contains: null },
+    { x: 2572, y: 152, w: 36, h: 36, type: "brick", contains: null },
     { x: 2644, y: 224, w: 36, h: 36, type: "question", contains: "coin" }
   ],
   coins: [
@@ -80,10 +79,14 @@ const level = {
   enemies: [
     { x: 264, y: 432, w: 40, h: 36, minX: 220, maxX: 340, dir: 1, speed: 0.82, kind: "goomba" },
     { x: 760, y: 432, w: 40, h: 36, minX: 700, maxX: 900, dir: 1, speed: 0.9, kind: "goomba" },
+    { x: 920, y: 432, w: 40, h: 36, minX: 900, maxX: 1100, dir: 1, speed: 0.92, kind: "goomba" },
     { x: 1080, y: 432, w: 40, h: 36, minX: 1020, maxX: 1400, dir: 1, speed: 0.96, kind: "goomba" },
     { x: 1320, y: 432, w: 40, h: 36, minX: 1180, maxX: 1540, dir: -1, speed: 1.05, kind: "beetle" },
+    { x: 1580, y: 432, w: 40, h: 36, minX: 1560, maxX: 1660, dir: -1, speed: 0.88, kind: "goomba" },
     { x: 1760, y: 432, w: 44, h: 40, minX: 1680, maxX: 1980, dir: -1, speed: 0.92, kind: "koopa" },
     { x: 2160, y: 432, w: 44, h: 40, minX: 2110, maxX: 2520, dir: 1, speed: 0.95, kind: "koopa" },
+    { x: 2380, y: 432, w: 40, h: 36, minX: 2320, maxX: 2520, dir: -1, speed: 0.96, kind: "beetle" },
+    { x: 2680, y: 432, w: 40, h: 36, minX: 2620, maxX: 2780, dir: 1, speed: 0.9, kind: "goomba" },
     { x: 2860, y: 432, w: 40, h: 36, minX: 2800, maxX: 3120, dir: 1, speed: 1.02, kind: "goomba" }
   ],
   bushes: [
@@ -131,8 +134,7 @@ const playerTemplate = {
   jump: -11.8,
   onGround: false,
   facing: 1,
-  form: "small",
-  crouching: false
+  form: "small"
 };
 
 let player;
@@ -227,37 +229,8 @@ function setPlayerForm(form) {
   const prevBottom = player.y + player.h;
   player.form = form;
   player.h = form === "small" ? 58 : 68;
-  player.crouching = false;
   player.y = prevBottom - player.h;
   syncHud();
-}
-
-function canPlayerFit(height) {
-  const prevHeight = player.h;
-  const prevY = player.y;
-  const bottom = player.y + player.h;
-  player.h = height;
-  player.y = bottom - height;
-  const blocked = getSolidRects().some((rect) => rectsOverlap(player, rect));
-  player.h = prevHeight;
-  player.y = prevY;
-  return !blocked;
-}
-
-function applyCrouch(shouldCrouch) {
-  if (player.form === "small") {
-    return;
-  }
-
-  const targetHeight = shouldCrouch ? 52 : 68;
-  if (!shouldCrouch && !canPlayerFit(targetHeight)) {
-    return;
-  }
-
-  const bottom = player.y + player.h;
-  player.h = targetHeight;
-  player.y = bottom - targetHeight;
-  player.crouching = shouldCrouch;
 }
 
 function spawnFloatingCoin(x, y) {
@@ -324,16 +297,8 @@ function activateBlock(block) {
   if (block.broken) {
     return;
   }
-
-  if (block.type === "brick") {
-    block.broken = true;
-    block.used = true;
-    spawnBrickDebris(block);
-    return;
-  }
-
   block.bumpVelocity = -2.8;
-  if (block.used) {
+  if (block.used || block.broken) {
     return;
   }
 
@@ -345,6 +310,8 @@ function activateBlock(block) {
   if (block.contains === "mushroom" || block.contains === "flower") {
     spawnPowerup(block);
   }
+  block.broken = true;
+  spawnBrickDebris(block);
   syncHud();
 }
 
@@ -636,7 +603,6 @@ function update(delta) {
   }
 
   player.vx = 0;
-  applyCrouch(keys.down && player.onGround);
   if (keys.left) {
     player.vx = -player.speed;
     player.facing = -1;
@@ -838,23 +804,23 @@ function drawPlayer() {
   const suitColor = player.form === "chef" ? "#fff6d6" : "#1c4fb9";
   const shirtColor = player.form === "chef" ? "#d84f2a" : "#c5322a";
   const bodyTop = player.y + 18;
-  const bodyHeight = player.crouching ? 18 : (tall ? 34 : 24);
-  const legY = player.crouching ? player.y + 38 : (tall ? player.y + 54 : player.y + 42);
+  const bodyHeight = tall ? 34 : 24;
+  const legY = tall ? player.y + 54 : player.y + 42;
 
   ctx.fillStyle = hatColor;
-  ctx.fillRect(x + 6, player.y + (player.crouching ? 10 : 4), 20, 8);
-  ctx.fillRect(x + 3, player.y + (player.crouching ? 16 : 10), 26, 8);
-  if (player.form === "chef" && !player.crouching) {
+  ctx.fillRect(x + 6, player.y + 4, 20, 8);
+  ctx.fillRect(x + 3, player.y + 10, 26, 8);
+  if (player.form === "chef") {
     ctx.fillRect(x + 8, player.y, 16, 6);
   }
   ctx.fillStyle = "#ffd0ad";
-  ctx.fillRect(x + 9, player.y + (player.crouching ? 20 : 14), 14, 12);
+  ctx.fillRect(x + 9, player.y + 14, 14, 12);
   ctx.fillStyle = shirtColor;
   ctx.fillRect(x + 5, bodyTop, 22, bodyHeight);
   ctx.fillStyle = suitColor;
-  ctx.fillRect(x + 6, player.y + 30, 8, bodyHeight + (player.crouching ? 2 : 6));
-  ctx.fillRect(x + 18, player.y + 30, 8, bodyHeight + (player.crouching ? 2 : 6));
-  if (player.form === "chef" && !player.crouching) {
+  ctx.fillRect(x + 6, player.y + 30, 8, bodyHeight + 6);
+  ctx.fillRect(x + 18, player.y + 30, 8, bodyHeight + 6);
+  if (player.form === "chef") {
     ctx.fillStyle = "#f5d26a";
     ctx.fillRect(x + 12, player.y + 36, 8, 8);
   }
@@ -1070,9 +1036,6 @@ window.addEventListener("keydown", (event) => {
   if (event.code === "ArrowRight") {
     keys.right = true;
   }
-  if (event.code === "ArrowDown") {
-    keys.down = true;
-  }
   if (event.code === "ArrowUp" && !keys.jumpPressed && status === "Running") {
     keys.jumpPressed = true;
     jumpBufferTimer = timing.jumpBufferFrames;
@@ -1095,9 +1058,7 @@ window.addEventListener("keyup", (event) => {
     keys.right = false;
   }
   if (event.code === "ArrowDown") {
-    keys.down = false;
     keys.shootPressed = false;
-    applyCrouch(false);
   }
   if (event.code === "ArrowUp") {
     keys.jumpPressed = false;
