@@ -33,8 +33,6 @@ const level = {
     { x: 2770, y: 468, w: 430, h: 72 }
   ],
   platforms: [
-    { x: 210, y: 360, w: 72, h: 18 },
-    { x: 305, y: 360, w: 72, h: 18 },
     { x: 900, y: 320, w: 108, h: 18 },
     { x: 1900, y: 332, w: 108, h: 18 },
     { x: 2420, y: 296, w: 108, h: 18 }
@@ -51,10 +49,12 @@ const level = {
     { x: 2690, y: 500, w: 80, h: 40 }
   ],
   blocks: [
-    { x: 420, y: 320, w: 36, h: 36, type: "question", contains: "coin" },
-    { x: 456, y: 320, w: 36, h: 36, type: "brick", contains: null },
-    { x: 492, y: 320, w: 36, h: 36, type: "question", contains: "mushroom" },
-    { x: 528, y: 320, w: 36, h: 36, type: "brick", contains: null },
+    { x: 360, y: 320, w: 36, h: 36, type: "question", contains: "coin" },
+    { x: 396, y: 320, w: 36, h: 36, type: "brick", contains: null },
+    { x: 432, y: 320, w: 36, h: 36, type: "question", contains: "mushroom" },
+    { x: 468, y: 320, w: 36, h: 36, type: "brick", contains: null },
+    { x: 396, y: 284, w: 36, h: 36, type: "brick", contains: null },
+    { x: 432, y: 284, w: 36, h: 36, type: "brick", contains: null },
     { x: 1150, y: 284, w: 36, h: 36, type: "question", contains: "coin" },
     { x: 1186, y: 284, w: 36, h: 36, type: "brick", contains: null },
     { x: 1222, y: 284, w: 36, h: 36, type: "brick", contains: null },
@@ -66,7 +66,7 @@ const level = {
     { x: 2572, y: 224, w: 36, h: 36, type: "question", contains: "coin" }
   ],
   coins: [
-    { x: 252, y: 320, r: 12 },
+    { x: 520, y: 286, r: 12 },
     { x: 640, y: 350, r: 12 },
     { x: 676, y: 346, r: 12 },
     { x: 1020, y: 280, r: 12 },
@@ -76,6 +76,7 @@ const level = {
     { x: 2920, y: 420, r: 12 }
   ],
   enemies: [
+    { x: 264, y: 432, w: 40, h: 36, minX: 220, maxX: 340, dir: 1, speed: 0.82, kind: "goomba" },
     { x: 760, y: 432, w: 40, h: 36, minX: 720, maxX: 880, dir: 1, speed: 0.9, kind: "goomba" },
     { x: 1320, y: 432, w: 40, h: 36, minX: 1020, maxX: 1540, dir: -1, speed: 1.05, kind: "goomba" },
     { x: 2160, y: 432, w: 44, h: 40, minX: 2110, maxX: 2520, dir: 1, speed: 0.95, kind: "koopa" }
@@ -135,6 +136,7 @@ let enemies;
 let blocks;
 let powerups;
 let floatingCoins;
+let debrisParticles;
 let coinsCollected;
 let lives;
 let status;
@@ -153,6 +155,7 @@ function resetGame() {
   blocks = initialBlocks.map((block) => ({ ...block, broken: false }));
   powerups = [];
   floatingCoins = [];
+  debrisParticles = [];
   coinsCollected = 0;
   lives = 3;
   status = "Running";
@@ -220,6 +223,27 @@ function spawnFloatingCoin(x, y) {
   });
 }
 
+function spawnBrickDebris(block) {
+  const velocities = [
+    { vx: -2.2, vy: -4.8 },
+    { vx: 2.2, vy: -4.8 },
+    { vx: -1.6, vy: -3.2 },
+    { vx: 1.6, vy: -3.2 }
+  ];
+
+  velocities.forEach((velocity, index) => {
+    debrisParticles.push({
+      x: block.x + (index % 2 === 0 ? 8 : 22),
+      y: block.y + (index < 2 ? 8 : 22),
+      w: 10,
+      h: 10,
+      vx: velocity.vx,
+      vy: velocity.vy,
+      life: 28
+    });
+  });
+}
+
 function spawnPowerup(block) {
   powerups.push({
     kind: "mushroom",
@@ -238,9 +262,10 @@ function activateBlock(block) {
     return;
   }
 
-  if (block.type === "brick" && player.form === "super") {
+  if (block.type === "brick") {
     block.broken = true;
     block.used = true;
+    spawnBrickDebris(block);
     return;
   }
 
@@ -367,6 +392,16 @@ function updateFloatingCoins(delta) {
   floatingCoins = floatingCoins.filter((coin) => coin.life > 0);
 }
 
+function updateDebris(delta) {
+  debrisParticles.forEach((piece) => {
+    piece.x += piece.vx * delta;
+    piece.y += piece.vy * delta;
+    piece.vy += 0.24 * delta;
+    piece.life -= delta;
+  });
+  debrisParticles = debrisParticles.filter((piece) => piece.life > 0);
+}
+
 function updatePowerups(delta) {
   powerups.forEach((item) => {
     if (item.emerging > 0) {
@@ -462,6 +497,7 @@ function update(delta) {
   if (status !== "Running") {
     updateBlocks(delta);
     updateFloatingCoins(delta);
+    updateDebris(delta);
     return;
   }
 
@@ -480,6 +516,7 @@ function update(delta) {
   updateRespawnPoint();
   updateBlocks(delta);
   updateFloatingCoins(delta);
+  updateDebris(delta);
   updatePowerups(delta);
 
   if (player.onGround) {
@@ -733,6 +770,14 @@ function drawPowerup(item) {
   ctx.fillRect(x + 18, item.y + 21, 4, 5);
 }
 
+function drawDebris(piece) {
+  const x = piece.x - cameraX;
+  ctx.fillStyle = "#bf6a28";
+  ctx.fillRect(x, piece.y, piece.w, piece.h);
+  ctx.fillStyle = "#7f3c12";
+  ctx.fillRect(x + 2, piece.y + 2, piece.w - 4, 3);
+}
+
 function drawFlag() {
   const poleX = level.flag.x - cameraX;
   ctx.fillStyle = "#f8f8f8";
@@ -801,6 +846,7 @@ function draw() {
   level.hazards.forEach(drawHazard);
   coins.filter((coin) => !coin.collected).forEach(drawCoin);
   floatingCoins.forEach(drawFloatingCoin);
+  debrisParticles.forEach(drawDebris);
   powerups.forEach(drawPowerup);
   enemies.forEach(drawEnemy);
   drawFlag();
