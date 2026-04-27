@@ -4,10 +4,10 @@
 
 body {
   margin: 0;
-  font-family: "Segoe UI", "Microsoft YaHei", sans-serif;
+  font-family: "Trebuchet MS", "Segoe UI", "Microsoft YaHei", sans-serif;
   background:
-    radial-gradient(circle at top, #8ed2ff 0%, #5bb7ff 35%, #1c75d1 100%);
-  color: #10203a;
+    linear-gradient(180deg, #74b8ff 0%, #4d96ff 55%, #2d63c8 100%);
+  color: #11264a;
 }
 
 .page {
@@ -27,11 +27,14 @@ body {
 .brand h1 {
   margin: 0;
   font-size: clamp(28px, 4vw, 42px);
+  color: #fff7cf;
+  text-shadow: 3px 3px 0 #c23c1d;
 }
 
 .brand p {
   margin: 8px 0 0;
   font-size: 15px;
+  color: #f4f8ff;
 }
 
 .stats {
@@ -47,10 +50,10 @@ body {
   min-width: 94px;
   height: 64px;
   padding: 10px 14px;
-  border: 3px solid #173d7a;
+  border: 3px solid #7a3d10;
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.92);
-  box-shadow: 0 5px 0 rgba(20, 58, 119, 0.25);
+  background: rgba(255, 248, 216, 0.95);
+  box-shadow: 0 5px 0 rgba(122, 61, 16, 0.28);
 }
 
 .stat {
@@ -61,17 +64,19 @@ body {
 
 .label {
   font-size: 12px;
-  opacity: 0.75;
+  color: #7a4a16;
 }
 
 .stat strong {
   font-size: 24px;
+  color: #bd2f21;
 }
 
 #restartButton {
   cursor: pointer;
   font-size: 16px;
   font-weight: 700;
+  color: #1f3f8b;
 }
 
 #restartButton:hover {
@@ -89,15 +94,15 @@ body {
 #gameCanvas {
   width: min(100%, 1280px);
   aspect-ratio: 16 / 9;
-  border: 4px solid #173d7a;
+  border: 4px solid #ffffff;
   border-radius: 8px;
-  background: linear-gradient(#6bd0ff 0%, #9ce6ff 50%, #d8f4ff 100%);
-  box-shadow: 0 16px 30px rgba(8, 38, 82, 0.28);
+  background: #5c94fc;
+  box-shadow: 0 16px 30px rgba(14, 34, 84, 0.28);
 }
 
 .mobile-tip {
   font-size: 13px;
-  color: #f7fbff;
+  color: #fff4cb;
 }
 
 @media (max-width: 860px) {
