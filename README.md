@@ -8,8 +8,6 @@
 - `styles.css`
 - `game.js`
 - `.nojekyll`
-- `.github/workflows/deploy-pages.yml`
-
 ## 本地打开
 
 在 Edge 地址栏输入：
@@ -27,8 +25,8 @@ file:///C:/Users/邓仲/OneDrive/Desktop/aiagent/index.html
 3. 确保默认分支名是 `main`
 4. 进入 GitHub 仓库页面
 5. 打开 `Settings` -> `Pages`
-6. 在 `Build and deployment` 中确认来源使用 `GitHub Actions`
-7. 等待 Actions 自动运行完成
+6. 在 `Build and deployment` 中选择从 `main` 分支和根目录发布
+7. 等待 GitHub Pages 完成部署
 
 发布成功后，公网网址通常是：
 
